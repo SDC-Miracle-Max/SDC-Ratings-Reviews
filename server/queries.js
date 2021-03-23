@@ -1,4 +1,4 @@
-const config = require('../config/dbConfig.js')
+const config = require('../config/dbAuth.js')
 const { Pool } = require('pg');
 const pool = new Pool (config);
 
@@ -186,7 +186,7 @@ const reviewPost = (reqObj, res) => {
   }
   pool.query(query.text, query.values)
     .then((results) => {
-        console.log('returned id', results.rows);
+        // console.log('returned id', results.rows);
             //   console.log('id query', result.rows);
         const { id } = results.rows[0];
         if(reqObj.photos) {
@@ -198,6 +198,24 @@ const reviewPost = (reqObj, res) => {
                 pool.query(image.text, image.values);
             })
         }
+        const charGet = {
+            text: `SELECT * FROM characteristic WHERE product_id = $1`,
+            values: [reqObj.product_id]
+        }
+        let reviewID = id;
+        pool.query(charGet.text, charGet.values)
+          .then((result) => {
+            //   console.log(result.rows)
+             if (result.rows) { 
+              result.rows.forEach((row) => {
+                  const charPost = {
+                    text: 'INSERT INTO characteristic_review (characteristic_id, review_id, char_value) VALUES ($1, $2, $3)',
+                    values: [row.id, reviewID, reqObj.characteristics[row.id]]
+                  }
+                  pool.query(charPost.text, charPost.values)
+              })
+            }
+          })
         res.sendStatus(201);
     })
     .catch((err) => {
