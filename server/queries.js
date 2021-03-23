@@ -14,7 +14,7 @@ const pool = new Pool (config);
 
 const sortNewest = (id, res) => {
   
-    const text = `SELECT * FROM review WHERE product_id = $1`;
+    const text = `SELECT r.*, array_agg(p.image_url) photos FROM review r LEFT JOIN photolinks p ON r.id = p.review_id WHERE product_id = $1 GROUP BY r.id`;
     const values = [id];
   pool.query(text, values)
     .then((results) => {
@@ -34,7 +34,7 @@ const sortNewest = (id, res) => {
 
 const sortHelpful = (id, res) => {
   const query = {
-    text: `SELECT * FROM review WHERE product_id = $1`,
+    text: `SELECT r.*, array_agg(p.image_url) photos FROM review r LEFT JOIN photolinks p ON r.id = p.review_id WHERE product_id = $1 GROUP BY r.id`,
     values: [ id ]
   }
   pool
@@ -54,7 +54,7 @@ const sortHelpful = (id, res) => {
 
 const sortRelevant = (id, res) => {
   const query = {
-      text: `SELECT * FROM review WHERE product_id = $1`,
+      text: `SELECT r.*, array_agg(p.image_url) photos FROM review r LEFT JOIN photolinks p ON r.id = p.review_id WHERE product_id = $1 GROUP BY r.id`,
       values: [ id ]
   }
   pool
@@ -148,10 +148,71 @@ const getMetaData = (id, res) => {
       })
 }
 
+const reportReview = (id, res) => {
+    const query = {
+        text: `UPDATE review SET reported = true WHERE id = $1`,
+        values: [ id ]
+    }
+    pool.query(query.text, query.values)
+      .then(() => res.sendStatus(204))
+      .catch((err) => {
+          console.log('err in reportet put req', err);
+          res.sendStatus(500);
+      })
+}
+
+const helpfulReview = (id, res) => {
+    const query = {
+        text: `UPDATE review SET helpfulness = helpfulness + 1 WHERE id = $1`,
+        values: [ id ]
+    }
+    pool.query(query.text, query.values)
+      .then(() => res.sendStatus(204))
+      .catch((err) => {
+          console.log('err in helpful put req', err);
+          res.sendStatus(500);
+      })  
+}
+
+const reviewPost = (reqObj, res) => {
+  let timeStamp = new Date();
+  const post_date = timeStamp.toISOString();
+  const query = {
+    text: `INSERT INTO review (product_id, rating, post_date, summary, body,
+         recommend, reported, reviewer_name, reviewer_email, response, helpfulness)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING id`,
+    values: [reqObj.product_id, reqObj.rating, post_date, reqObj.summary, reqObj.body,  reqObj.recommend, false,
+    reqObj.reviewer_name, reqObj.reviewer_email, null, 0]
+  }
+  pool.query(query.text, query.values)
+    .then((results) => {
+        console.log('returned id', results.rows);
+            //   console.log('id query', result.rows);
+        const { id } = results.rows[0];
+        if(reqObj.photos) {
+            reqObj.photos.forEach((photo) => {
+                const image = {
+                text: `INSERT INTO photolinks(review_id, image_url) VALUES ($1, $2)`,
+                values: [id, photo]
+                }
+                pool.query(image.text, image.values);
+            })
+        }
+        res.sendStatus(201);
+    })
+    .catch((err) => {
+        console.log('error in post request', err);
+        res.sendStatus(500);
+    })
+}
+
 module.exports = {
     // getTwoReviews,
     sortHelpful,
     sortRelevant,
     sortNewest,
-    getMetaData
+    getMetaData,
+    reportReview,
+    helpfulReview,
+    reviewPost
 }

@@ -37,6 +37,19 @@ app.get('/reviews/meta/:id', (req, res) => {
     query.getMetaData(id, res);
 })
 
+app.put('/reviews/:review_id/reported', (req, res) => {
+    const { review_id } = req.params;
+    query.reportReview(review_id, res);
+})
+
+app.put('/reviews/:review_id/helpful', (req, res) => {
+    const { review_id } = req.params;
+    query.helpfulReview(review_id, res);
+})
+
+app.post('/reviews', (req, res) => {
+    query.reviewPost(req.body, res)
+})
 
 
 app.listen(PORT, () => {
