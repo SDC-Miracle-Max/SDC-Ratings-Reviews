@@ -1,0 +1,31 @@
+{
+  "name": "sdc-ratings-reviews",
+  "version": "1.0.0",
+  "description": "Ratings and reviews server and database",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "nodemon server"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SDC-Miracle-Max/SDC-Ratings-Reviews.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/SDC-Miracle-Max/SDC-Ratings-Reviews/issues"
+  },
+  "homepage": "https://github.com/SDC-Miracle-Max/SDC-Ratings-Reviews#readme",
+  "dependencies": {
+    "babel": "^6.23.0",
+    "body-parser": "^1.19.0",
+    "express": "^4.17.1",
+    "nodemon": "^2.0.7",
+    "pg": "^8.5.1",
+    "webpack": "^5.26.2"
+  },
+  "devDependencies": {
+    "morgan": "^1.10.0"
+  }
+}
